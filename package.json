@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongodb": "^7.1.0"
+  },
+  "scripts": {
+    "run:client": "cd src/client/my-react-app && npm run dev",
+    "run:server": "cd src/server && node index.js",
+    "dev": "concurrently \"npm run run:server\" \"npm run run:client\""
+  }
+}
