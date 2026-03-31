@@ -35,7 +35,7 @@ const GAMES = [
     author: 'Team Cherry',
     genre: 'Metroidvania',
     releaseYear: 2017,
-    coverImage: 'https://upload.wikimedia.org/wikipedia/en/5/5b/Hollow_Knight_first_cover.jpg',
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/d/de/Hollow_Knight_2026_cover_art.jpg',
   },
   {
     title: 'Hades',
@@ -53,6 +53,54 @@ const GAMES = [
     releaseYear: 2020,
     coverImage: 'https://upload.wikimedia.org/wikipedia/en/9/9f/Cyberpunk_2077_box_art.jpg',
   },
+  {
+    title: 'God of War',
+    description: 'His vengeance against the Gods of Olympus years behind him, Kratos now lives as a man in the realm of Norse Gods and monsters. He must fight to survive… and teach his son to do the same.',
+    author: 'Santa Monica Studio',
+    genre: 'Action-Adventure',
+    releaseYear: 2018,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/a/a7/God_of_War_4_cover.jpg',
+  },
+  {
+    title: 'Stardew Valley',
+    description: 'You\'ve inherited your grandfather\'s old farm plot. Armed with hand-me-down tools and a few coins, you set out to begin your new life. Can you learn to live off the land?',
+    author: 'ConcernedApe',
+    genre: 'Simulation RPG',
+    releaseYear: 2016,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/f/fd/Logo_of_Stardew_Valley.png',
+  },
+  {
+    title: 'Baldur\'s Gate 3',
+    description: 'Gather your party and return to the Forgotten Realms in a tale of fellowship and betrayal, sacrifice and survival, and the lure of absolute power.',
+    author: 'Larian Studios',
+    genre: 'CRPG',
+    releaseYear: 2023,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/1/12/Baldur%27s_Gate_3_cover_art.jpg',
+  },
+  {
+    title: 'Mass Effect Legendary Edition',
+    description: 'Relive the cinematic saga. One person is all that stands between humanity and the greatest threat it’s ever faced. Includes the highly acclaimed trilogy.',
+    author: 'BioWare',
+    genre: 'Sci-Fi RPG',
+    releaseYear: 2021,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/9/97/Mass_Effect_Legendary_Edition.jpeg',
+  },
+  {
+    title: 'The Legend of Zelda: Breath of the Wild',
+    description: 'Step into a world of discovery, exploration, and adventure. Travel across vast fields, through forests, and to mountain peaks as you discover what has become of the kingdom of Hyrule.',
+    author: 'Nintendo',
+    genre: 'Action-Adventure',
+    releaseYear: 2017,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/c/c6/The_Legend_of_Zelda_Breath_of_the_Wild.jpg',
+  },
+  {
+    title: 'Portal 2',
+    description: 'Portal 2 draws from the award-winning formula of innovative gameplay, story, and music that earned the original Portal over 70 industry accolades and created a cult following.',
+    author: 'Valve',
+    genre: 'Puzzle Platformer',
+    releaseYear: 2011,
+    coverImage: 'https://upload.wikimedia.org/wikipedia/en/f/f9/Portal2cover.jpg',
+  }
 ];
 
 async function seed() {
@@ -92,6 +140,20 @@ async function seed() {
 
     { game: games[5]._id, author: user1._id, rating: 4, description: 'Post-patch this game is absolutely amazing. Night City is breathtaking and V\'s story is compelling.' },
     { game: games[5]._id, author: user2._id, rating: 3, description: 'Good game now but the launch state was inexcusable. Still enjoyable but some RPG promises feel hollow.' },
+
+    { game: games[6]._id, author: user1._id, rating: 5, description: 'BOY! The combat is brutal, the story is incredibly moving, and the one-shot camera is a technical marvel.' },
+    { game: games[6]._id, author: user2._id, rating: 5, description: 'A perfect reboot. Kratos actually has depth now.' },
+
+    { game: games[7]._id, author: admin._id, rating: 5, description: 'The most relaxing game ever made. I spent 200 hours just farming.' },
+    
+    { game: games[8]._id, author: user2._id, rating: 5, description: 'The new gold standard for RPGs. The amount of choices and consequences is staggering.' },
+    { game: games[8]._id, author: admin._id, rating: 5, description: 'Larian crafted an absolute masterpiece. Every playthrough is entirely unique.' },
+
+    { game: games[9]._id, author: user1._id, rating: 5, description: 'Having the whole trilogy in one package is amazing. Commander Shepard is a legend.' },
+    
+    { game: games[10]._id, author: user2._id, rating: 5, description: 'Completely revolutionized open-world design. Exploring Hyrule is pure magic.' },
+    
+    { game: games[11]._id, author: admin._id, rating: 5, description: 'The perfect sequel. Hilarious writing and brilliant puzzles.' }
   ];
 
   for (const r of reviewData) {
