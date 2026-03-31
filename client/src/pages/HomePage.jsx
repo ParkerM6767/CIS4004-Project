@@ -41,7 +41,7 @@ export default function HomePage() {
       {/* Hero header */}
       <div className="mb-10">
         <h1 className="text-6xl sm:text-8xl font-display text-zinc-900 dark:text-zinc-100 leading-none mb-2">
-          GAME<span className="text-brand-600 dark:text-brand-500">VAULT</span>
+          META<span className="text-brand-600 dark:text-brand-600">GAME</span>
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400 text-lg">
           Discover and review your favorite video games

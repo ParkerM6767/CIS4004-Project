@@ -12,7 +12,7 @@
   }
 
   body {
-    @apply font-body bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-200;
+    @apply font-body bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 transition-colors duration-200;
     font-size: 16px;
   }
 

@@ -21,8 +21,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-display tracking-widest text-brand-600 dark:text-brand-400">
-              GAME<span className="text-zinc-900 dark:text-zinc-100">VAULT</span>
+            <span className="text-2xl font-display tracking-widest text-brand-600 dark:text-brand-600">
+              META<span className="text-zinc-900 dark:text-zinc-100">GAME</span>
             </span>
           </Link>
 

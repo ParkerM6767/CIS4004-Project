@@ -16,7 +16,7 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <BrowserRouter>
-            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
+            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors duration-200">
               <Navbar />
               <main>
                 <Routes>

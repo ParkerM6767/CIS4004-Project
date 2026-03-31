@@ -21,7 +21,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signup(form.username, form.password);
-      toast({ message: 'Account created! Welcome to GameVault.', type: 'success' });
+      toast({ message: 'Account created! Welcome to METAGAME.', type: 'success' });
       navigate('/');
     } catch (err) {
       toast({ message: err.response?.data?.message || 'Signup failed', type: 'error' });
@@ -34,8 +34,8 @@ export default function SignupPage() {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
       <div className="w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-display text-zinc-900 dark:text-zinc-100 mb-2">JOIN THE VAULT</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">Create your GameVault account</p>
+          <h1 className="text-5xl font-display text-zinc-900 dark:text-zinc-100 mb-2">Create an Account</h1>
+          <p className="text-zinc-500 dark:text-zinc-400">Create your METAGAME account</p>
         </div>
 
         <div className="card p-8">
@@ -45,7 +45,7 @@ export default function SignupPage() {
               <input
                 type="text"
                 className="input"
-                placeholder="choose_a_username"
+                placeholder="Unique username"
                 value={form.username}
                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
                 required
@@ -57,7 +57,7 @@ export default function SignupPage() {
               <input
                 type="password"
                 className="input"
-                placeholder="min. 6 characters"
+                placeholder="Minimum of 6 characters"
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 required
@@ -68,7 +68,7 @@ export default function SignupPage() {
               <input
                 type="password"
                 className="input"
-                placeholder="repeat password"
+                placeholder="Repeat password"
                 value={form.confirm}
                 onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
                 required
