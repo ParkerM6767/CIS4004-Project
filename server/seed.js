@@ -113,7 +113,8 @@ async function seed() {
 
   // Create admin + users (ONLY FOR TESTING)
   const admin = await User.create({ username: 'admin', password: 'CHANGEPASSWORDHERE', role: 'admin' });
-  const user1 = await User.create({ username: 'gamer_pro', password: 'password123' });
+  const user1 = await User.create({ username: 'gamer_pro', password: 'CHANGEPASSWORDHERE' });
+  const user2 = await User.create({ username: "friendly_reviewer", password: 'CHANGEPASSWORDHERE'})
   console.log('Created users: admin / admin123, gamer_pro / password123');
 
   // Create games
