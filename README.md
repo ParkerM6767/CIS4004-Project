@@ -24,47 +24,6 @@ A full-stack MERN application for discovering and reviewing video games.
 
 ---
 
-## Project Structure
-
-```
-gamevault/
-├── server/                  # Express API
-│   ├── models/
-│   │   ├── User.js          # username, password (hashed), role, uuid, JWT session
-│   │   ├── Game.js          # title, description, author, coverImage, rating
-│   │   └── Review.js        # rating, description, author ref, game ref
-│   ├── routes/
-│   │   ├── auth.js          # POST /login, /signup, GET /me, POST /logout
-│   │   ├── games.js         # CRUD /games
-│   │   ├── reviews.js       # CRUD /reviews
-│   │   └── users.js         # Admin CRUD /users
-│   ├── middleware/
-│   │   └── auth.js          # protect, requireAdmin
-│   ├── seed.js              # Sample data seeder
-│   └── index.js             # Express entry point
-│
-└── client/                  # React SPA
-    └── src/
-        ├── context/
-        │   ├── AuthContext.jsx   # login/logout/signup state
-        │   └── ThemeContext.jsx  # dark/light toggle
-        ├── components/
-        │   ├── Navbar.jsx
-        │   ├── GameCard.jsx
-        │   ├── StarRating.jsx    # interactive + display modes
-        │   ├── Modal.jsx
-        │   ├── Toast.jsx         # notification system
-        │   └── ProtectedRoute.jsx
-        └── pages/
-            ├── HomePage.jsx      # game grid with search
-            ├── GamePage.jsx      # game detail + reviews feed
-            ├── LoginPage.jsx
-            ├── SignupPage.jsx
-            └── AdminPage.jsx     # tabbed admin panel (Games / Reviews / Users)
-```
-
----
-
 ## Quick Start
 
 ### Prerequisites
@@ -153,35 +112,3 @@ NODE_ENV=development
 | GET | `/api/users` | Admin | List all users |
 | PUT | `/api/users/:id` | Admin | Update user (username, role, password) |
 | DELETE | `/api/users/:id` | Admin | Delete user |
-
----
-
-## User Roles
-
-| Feature | Standard User | Admin |
-|---------|--------------|-------|
-| Browse games | ✅ | ✅ |
-| Read reviews | ✅ | ✅ |
-| Post reviews | ✅ | ✅ |
-| Edit own reviews | ✅ | ✅ |
-| Delete own reviews | ✅ | ✅ |
-| Admin panel | ❌ | ✅ |
-| Add/edit/delete games | ❌ | ✅ |
-| Edit/delete any review | ❌ | ✅ |
-| Manage users | ❌ | ✅ |
-
-> **Note:** The first user to sign up is automatically made an admin.
-
----
-
-## Deployment
-
-### Backend (e.g. Railway, Render, Fly.io)
-1. Set environment variables in your hosting dashboard
-2. Set `MONGODB_URI` to your Atlas connection string
-3. Deploy the `server/` directory
-
-### Frontend (e.g. Vercel, Netlify)
-1. Build: `cd client && npm run build`
-2. Set `VITE_API_URL` if not using a proxy
-3. Deploy the `client/dist/` directory
