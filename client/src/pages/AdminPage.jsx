@@ -4,15 +4,65 @@ import { useToast } from '../components/Toast';
 import Modal from '../components/Modal';
 import StarRating from '../components/StarRating';
 
-// ─── GAMES TAB ───────────────────────────────────────────────────────────────
+// ─── SHARED HELPERS ───────────────────────────────────────────────────────────
+
+function Skeleton({ rows = 5 }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="card p-4 animate-pulse flex items-center gap-4">
+          <div className="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-800 flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3" />
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Pagination({ page, pages, onChange }) {
+  if (pages <= 1) return null;
+  return (
+    <div className="flex items-center justify-center gap-2 mt-6">
+      <button onClick={() => onChange(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40">← Prev</button>
+      <span className="text-sm text-zinc-500 px-3">Page {page} of {pages}</span>
+      <button onClick={() => onChange(p => Math.min(pages, p + 1))} disabled={page === pages} className="btn-secondary disabled:opacity-40">Next →</button>
+    </div>
+  );
+}
+
+// ─── GAMES TAB ────────────────────────────────────────────────────────────────
 
 function GameForm({ initial, onSubmit, onCancel }) {
+  const [genres, setGenres] = useState([]);
+  const [platforms, setPlatforms] = useState([]);
   const [form, setForm] = useState({
-    title: '', description: '', author: '', coverImage: '', genre: '', releaseYear: '',
+    title: '', description: '', author: '', coverImage: '',
+    genre: '', releaseYear: '', platforms: [],
     ...initial,
+    genre: initial?.genre?._id || initial?.genre || '',
+    platforms: (initial?.platforms || []).map(p => p._id || p),
   });
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+
+  useEffect(() => {
+    Promise.all([api.get('/genres'), api.get('/platforms')]).then(([g, p]) => {
+      setGenres(g.data.genres);
+      setPlatforms(p.data.platforms);
+    });
+  }, []);
+
+  const togglePlatform = (id) => {
+    setForm(f => ({
+      ...f,
+      platforms: f.platforms.includes(id)
+        ? f.platforms.filter(p => p !== id)
+        : [...f.platforms, id],
+    }));
+  };
 
   const handle = async (e) => {
     e.preventDefault();
@@ -20,6 +70,7 @@ function GameForm({ initial, onSubmit, onCancel }) {
     try {
       const payload = { ...form };
       if (!payload.releaseYear) delete payload.releaseYear;
+      if (!payload.genre) payload.genre = null;
       if (initial?._id) {
         const res = await api.put(`/games/${initial._id}`, payload);
         onSubmit(res.data.game, true);
@@ -48,16 +99,39 @@ function GameForm({ initial, onSubmit, onCancel }) {
           <input className="input" value={form.author} onChange={f('author')} required placeholder="Studio name" />
         </div>
         <div>
-          <label className="label">Genre</label>
-          <input className="input" value={form.genre} onChange={f('genre')} placeholder="e.g. RPG, FPS, Platformer" />
-        </div>
-        <div>
           <label className="label">Release Year</label>
           <input className="input" type="number" value={form.releaseYear} onChange={f('releaseYear')} placeholder="e.g. 2024" min="1970" max="2030" />
         </div>
         <div>
+          <label className="label">Genre</label>
+          <select className="input" value={form.genre} onChange={f('genre')}>
+            <option value="">Select genre...</option>
+            {genres.map(g => <option key={g._id} value={g._id}>{g.name}</option>)}
+          </select>
+        </div>
+        <div>
           <label className="label">Cover Image URL</label>
           <input className="input" value={form.coverImage} onChange={f('coverImage')} placeholder="https://..." />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Platforms</label>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {platforms.map(p => (
+              <button
+                key={p._id}
+                type="button"
+                onClick={() => togglePlatform(p._id)}
+                className={[
+                  'px-3 py-1.5 rounded-lg text-sm font-mono font-medium border transition-all',
+                  form.platforms.includes(p._id)
+                    ? 'bg-brand-600 border-brand-600 text-white'
+                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400',
+                ].join(' ')}
+              >
+                {p.abbreviation || p.name}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="sm:col-span-2">
           <label className="label">Description *</label>
@@ -77,7 +151,7 @@ function GameForm({ initial, onSubmit, onCancel }) {
 function GamesTab() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // null | 'add' | game object
+  const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const toast = useToast();
@@ -115,8 +189,6 @@ function GamesTab() {
     }
   };
 
-  const pages = Math.ceil(total / LIMIT);
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -128,28 +200,10 @@ function GamesTab() {
       </div>
 
       <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'add' ? 'ADD GAME' : 'EDIT GAME'} size="lg">
-        {modal && (
-          <GameForm
-            initial={modal === 'add' ? undefined : modal}
-            onSubmit={handleSubmit}
-            onCancel={() => setModal(null)}
-          />
-        )}
+        {modal && <GameForm initial={modal === 'add' ? undefined : modal} onSubmit={handleSubmit} onCancel={() => setModal(null)} />}
       </Modal>
 
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="card p-4 animate-pulse flex gap-4">
-              <div className="w-12 h-16 bg-zinc-200 dark:bg-zinc-800 rounded flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3" />
-                <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : games.length === 0 ? (
+      {loading ? <Skeleton /> : games.length === 0 ? (
         <div className="card p-8 text-center text-zinc-500">No games yet</div>
       ) : (
         <div className="space-y-3">
@@ -163,10 +217,18 @@ function GamesTab() {
               />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">{game.title}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.author} {game.releaseYear ? `· ${game.releaseYear}` : ''}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {game.author}{game.releaseYear ? ` · ${game.releaseYear}` : ''}
+                  {game.genre?.name ? ` · ${game.genre.name}` : ''}
+                </p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <StarRating rating={game.currentRating} size="sm" />
                   <span className="text-xs text-zinc-400">{game.reviewCount} reviews</span>
+                  {game.platforms?.slice(0, 3).map(p => (
+                    <span key={p._id} className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded">
+                      {p.abbreviation || p.name}
+                    </span>
+                  ))}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -177,61 +239,18 @@ function GamesTab() {
           ))}
         </div>
       )}
-
-      {pages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40">← Prev</button>
-          <span className="text-sm text-zinc-500 px-3">Page {page} of {pages}</span>
-          <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} className="btn-secondary disabled:opacity-40">Next →</button>
-        </div>
-      )}
+      <Pagination page={page} pages={Math.ceil(total / LIMIT)} onChange={setPage} />
     </div>
   );
 }
 
 // ─── REVIEWS TAB ─────────────────────────────────────────────────────────────
 
-function ReviewEditForm({ review, onSubmit, onCancel }) {
-  const [rating, setRating] = useState(review.rating);
-  const [description, setDescription] = useState(review.description);
-  const [loading, setLoading] = useState(false);
-  const toast = useToast();
-
-  const handle = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await api.put(`/reviews/${review._id}`, { rating, description });
-      onSubmit(res.data.review);
-    } catch (err) {
-      toast({ message: err.response?.data?.message || 'Failed to update', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handle} className="space-y-4">
-      <div>
-        <label className="label">Rating</label>
-        <StarRating rating={rating} size="lg" interactive onChange={setRating} />
-      </div>
-      <div>
-        <label className="label">Review Text</label>
-        <textarea className="input min-h-[100px] resize-none" value={description} onChange={e => setDescription(e.target.value)} rows={4} />
-      </div>
-      <div className="flex gap-3">
-        <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Update Review'}</button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
-      </div>
-    </form>
-  );
-}
-
 function ReviewsTab() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [editForm, setEditForm] = useState({ rating: 0, description: '' });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const toast = useToast();
@@ -250,6 +269,23 @@ function ReviewsTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const openEdit = (review) => {
+    setEditing(review);
+    setEditForm({ rating: review.rating, description: review.description });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.put(`/reviews/${editing._id}`, editForm);
+      setReviews(prev => prev.map(r => r._id === editing._id ? { ...r, ...res.data.review } : r));
+      setEditing(null);
+      toast({ message: 'Review updated!', type: 'success' });
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to update', type: 'error' });
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Delete this review?')) return;
     try {
@@ -257,18 +293,10 @@ function ReviewsTab() {
       setReviews(prev => prev.filter(r => r._id !== id));
       setTotal(t => t - 1);
       toast({ message: 'Review deleted', type: 'success' });
-    } catch (err) {
+    } catch {
       toast({ message: 'Failed to delete', type: 'error' });
     }
   };
-
-  const handleEditSubmit = (updated) => {
-    setReviews(prev => prev.map(r => r._id === updated._id ? { ...r, ...updated } : r));
-    setEditing(null);
-    toast({ message: 'Review updated!', type: 'success' });
-  };
-
-  const pages = Math.ceil(total / LIMIT);
 
   return (
     <div>
@@ -278,19 +306,25 @@ function ReviewsTab() {
       </div>
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title="EDIT REVIEW">
-        {editing && <ReviewEditForm review={editing} onSubmit={handleEditSubmit} onCancel={() => setEditing(null)} />}
+        {editing && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <label className="label">Rating</label>
+              <StarRating rating={editForm.rating} size="lg" interactive onChange={v => setEditForm(f => ({ ...f, rating: v }))} />
+            </div>
+            <div>
+              <label className="label">Review Text</label>
+              <textarea className="input min-h-[100px] resize-none" value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={4} />
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary">Update Review</button>
+              <button type="button" className="btn-secondary" onClick={() => setEditing(null)}>Cancel</button>
+            </div>
+          </form>
+        )}
       </Modal>
 
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="card p-4 animate-pulse space-y-2">
-              <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3" />
-              <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-full" />
-            </div>
-          ))}
-        </div>
-      ) : reviews.length === 0 ? (
+      {loading ? <Skeleton /> : reviews.length === 0 ? (
         <div className="card p-8 text-center text-zinc-500">No reviews yet</div>
       ) : (
         <div className="space-y-3">
@@ -302,6 +336,11 @@ function ReviewsTab() {
                     <span className="font-medium text-zinc-900 dark:text-zinc-100 text-sm">{review.author?.username}</span>
                     <span className="text-xs text-zinc-400">→</span>
                     <span className="text-xs text-brand-600 dark:text-brand-400 font-medium">{review.game?.title}</span>
+                    {review.platform && (
+                      <span className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded">
+                        {review.platform.abbreviation || review.platform.name}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <StarRating rating={review.rating} size="sm" />
@@ -309,7 +348,7 @@ function ReviewsTab() {
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button onClick={() => setEditing(review)} className="btn-secondary text-sm py-1 px-3">Edit</button>
+                  <button onClick={() => openEdit(review)} className="btn-secondary text-sm py-1 px-3">Edit</button>
                   <button onClick={() => handleDelete(review._id)} className="btn-danger text-sm py-1 px-3">Delete</button>
                 </div>
               </div>
@@ -318,69 +357,18 @@ function ReviewsTab() {
           ))}
         </div>
       )}
-
-      {pages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40">← Prev</button>
-          <span className="text-sm text-zinc-500 px-3">Page {page} of {pages}</span>
-          <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} className="btn-secondary disabled:opacity-40">Next →</button>
-        </div>
-      )}
+      <Pagination page={page} pages={Math.ceil(total / LIMIT)} onChange={setPage} />
     </div>
   );
 }
 
 // ─── USERS TAB ────────────────────────────────────────────────────────────────
 
-function UserEditForm({ user, onSubmit, onCancel }) {
-  const [form, setForm] = useState({ username: user.username, role: user.role, password: '' });
-  const [loading, setLoading] = useState(false);
-  const toast = useToast();
-
-  const handle = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const payload = { username: form.username, role: form.role };
-      if (form.password) payload.password = form.password;
-      const res = await api.put(`/users/${user._id}`, payload);
-      onSubmit(res.data.user);
-    } catch (err) {
-      toast({ message: err.response?.data?.message || 'Failed to update user', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handle} className="space-y-4">
-      <div>
-        <label className="label">Username</label>
-        <input className="input" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} required />
-      </div>
-      <div>
-        <label className="label">Role</label>
-        <select className="input" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div>
-        <label className="label">New Password <span className="text-zinc-400 font-normal">(leave blank to keep current)</span></label>
-        <input type="password" className="input" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••" />
-      </div>
-      <div className="flex gap-3">
-        <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Update User'}</button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
-      </div>
-    </form>
-  );
-}
-
 function UsersTab() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [editForm, setEditForm] = useState({ username: '', role: 'user', password: '' });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const toast = useToast();
@@ -399,6 +387,25 @@ function UsersTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const openEdit = (user) => {
+    setEditing(user);
+    setEditForm({ username: user.username, role: user.role, password: '' });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { username: editForm.username, role: editForm.role };
+      if (editForm.password) payload.password = editForm.password;
+      const res = await api.put(`/users/${editing._id}`, payload);
+      setUsers(prev => prev.map(u => u._id === editing._id ? res.data.user : u));
+      setEditing(null);
+      toast({ message: 'User updated!', type: 'success' });
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to update user', type: 'error' });
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm('Delete this user?')) return;
     try {
@@ -411,14 +418,6 @@ function UsersTab() {
     }
   };
 
-  const handleEditSubmit = (updated) => {
-    setUsers(prev => prev.map(u => u._id === updated._id ? updated : u));
-    setEditing(null);
-    toast({ message: 'User updated!', type: 'success' });
-  };
-
-  const pages = Math.ceil(total / LIMIT);
-
   return (
     <div>
       <div className="mb-6">
@@ -427,22 +426,32 @@ function UsersTab() {
       </div>
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title="EDIT USER">
-        {editing && <UserEditForm user={editing} onSubmit={handleEditSubmit} onCancel={() => setEditing(null)} />}
+        {editing && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div>
+              <label className="label">Username</label>
+              <input className="input" value={editForm.username} onChange={e => setEditForm(f => ({ ...f, username: e.target.value }))} required />
+            </div>
+            <div>
+              <label className="label">Role</label>
+              <select className="input" value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">New Password <span className="text-zinc-400 font-normal">(leave blank to keep current)</span></label>
+              <input type="password" className="input" value={editForm.password} onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••" />
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary">Update User</button>
+              <button type="button" className="btn-secondary" onClick={() => setEditing(null)}>Cancel</button>
+            </div>
+          </form>
+        )}
       </Modal>
 
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="card p-4 animate-pulse flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/4" />
-                <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-1/6" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : users.length === 0 ? (
+      {loading ? <Skeleton /> : users.length === 0 ? (
         <div className="card p-8 text-center text-zinc-500">No users found</div>
       ) : (
         <div className="space-y-3">
@@ -460,35 +469,276 @@ function UsersTab() {
                   <span className="text-xs text-zinc-400 font-mono">{user.uuid?.slice(0, 8)}...</span>
                 </div>
               </div>
-              <div className="text-xs text-zinc-400 hidden sm:block">
-                {new Date(user.createdAt).toLocaleDateString()}
-              </div>
+              <div className="text-xs text-zinc-400 hidden sm:block">{new Date(user.createdAt).toLocaleDateString()}</div>
               <div className="flex gap-2 shrink-0">
-                <button onClick={() => setEditing(user)} className="btn-secondary text-sm py-1.5 px-3">Edit</button>
+                <button onClick={() => openEdit(user)} className="btn-secondary text-sm py-1.5 px-3">Edit</button>
                 <button onClick={() => handleDelete(user._id)} className="btn-danger text-sm py-1.5 px-3">Delete</button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <Pagination page={page} pages={Math.ceil(total / LIMIT)} onChange={setPage} />
+    </div>
+  );
+}
 
-      {pages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40">← Prev</button>
-          <span className="text-sm text-zinc-500 px-3">Page {page} of {pages}</span>
-          <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} className="btn-secondary disabled:opacity-40">Next →</button>
+// ─── GENRES TAB ───────────────────────────────────────────────────────────────
+
+function GenresTab() {
+  const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null); // null | 'add' | genre obj
+  const [form, setForm] = useState({ name: '', description: '' });
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/genres');
+      setGenres(res.data.genres);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setForm({ name: '', description: '' }); setModal('add'); };
+  const openEdit = (g) => { setForm({ name: g.name, description: g.description || '' }); setModal(g); };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (modal === 'add') {
+        const res = await api.post('/genres', form);
+        setGenres(prev => [...prev, res.data.genre].sort((a, b) => a.name.localeCompare(b.name)));
+        toast({ message: 'Genre created!', type: 'success' });
+      } else {
+        const res = await api.put(`/genres/${modal._id}`, form);
+        setGenres(prev => prev.map(g => g._id === modal._id ? res.data.genre : g));
+        toast({ message: 'Genre updated!', type: 'success' });
+      }
+      setModal(null);
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to save genre', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this genre? Games using it will have their genre cleared.')) return;
+    try {
+      await api.delete(`/genres/${id}`);
+      setGenres(prev => prev.filter(g => g._id !== id));
+      toast({ message: 'Genre deleted', type: 'success' });
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to delete', type: 'error' });
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-display text-zinc-900 dark:text-zinc-100">GENRES</h2>
+          <p className="text-sm text-zinc-500">{genres.length} total</p>
+        </div>
+        <button onClick={openAdd} className="btn-primary">+ Add Genre</button>
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'add' ? 'ADD GENRE' : 'EDIT GENRE'}>
+        {modal && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="label">Name *</label>
+              <input className="input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required placeholder="e.g. RPG, FPS, Strategy" autoFocus />
+            </div>
+            <div>
+              <label className="label">Description</label>
+              <textarea className="input resize-none" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Brief description of this genre..." />
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : modal === 'add' ? 'Create Genre' : 'Update Genre'}</button>
+              <button type="button" className="btn-secondary" onClick={() => setModal(null)}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {loading ? <Skeleton rows={4} /> : genres.length === 0 ? (
+        <div className="card p-8 text-center text-zinc-500">No genres yet. Add one to get started.</div>
+      ) : (
+        <div className="space-y-3">
+          {genres.map(genre => (
+            <div key={genre._id} className="card p-4 flex items-center gap-4 animate-slide-up">
+              <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-950 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-display text-brand-700 dark:text-brand-300">
+                  {genre.name.slice(0, 3).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">{genre.name}</p>
+                {genre.description && (
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{genre.description}</p>
+                )}
+                <p className="text-[10px] font-mono text-zinc-400 mt-0.5">slug: {genre.slug}</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => openEdit(genre)} className="btn-secondary text-sm py-1.5 px-3">Edit</button>
+                <button onClick={() => handleDelete(genre._id)} className="btn-danger text-sm py-1.5 px-3">Delete</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-// ─── MAIN ADMIN PAGE ─────────────────────────────────────────────────────────
+// ─── PLATFORMS TAB ────────────────────────────────────────────────────────────
+
+function PlatformsTab() {
+  const [platforms, setPlatforms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ name: '', manufacturer: '', releaseYear: '', abbreviation: '' });
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/platforms');
+      setPlatforms(res.data.platforms);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => { setForm({ name: '', manufacturer: '', releaseYear: '', abbreviation: '' }); setModal('add'); };
+  const openEdit = (p) => {
+    setForm({ name: p.name, manufacturer: p.manufacturer || '', releaseYear: p.releaseYear || '', abbreviation: p.abbreviation || '' });
+    setModal(p);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = { ...form };
+      if (!payload.releaseYear) delete payload.releaseYear;
+      if (modal === 'add') {
+        const res = await api.post('/platforms', payload);
+        setPlatforms(prev => [...prev, res.data.platform].sort((a, b) => a.name.localeCompare(b.name)));
+        toast({ message: 'Platform created!', type: 'success' });
+      } else {
+        const res = await api.put(`/platforms/${modal._id}`, payload);
+        setPlatforms(prev => prev.map(p => p._id === modal._id ? res.data.platform : p));
+        toast({ message: 'Platform updated!', type: 'success' });
+      }
+      setModal(null);
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to save platform', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this platform? It will be removed from all games.')) return;
+    try {
+      await api.delete(`/platforms/${id}`);
+      setPlatforms(prev => prev.filter(p => p._id !== id));
+      toast({ message: 'Platform deleted', type: 'success' });
+    } catch (err) {
+      toast({ message: err.response?.data?.message || 'Failed to delete', type: 'error' });
+    }
+  };
+
+  const f = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-3xl font-display text-zinc-900 dark:text-zinc-100">PLATFORMS</h2>
+          <p className="text-sm text-zinc-500">{platforms.length} total</p>
+        </div>
+        <button onClick={openAdd} className="btn-primary">+ Add Platform</button>
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'add' ? 'ADD PLATFORM' : 'EDIT PLATFORM'}>
+        {modal && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="label">Name *</label>
+                <input className="input" value={form.name} onChange={f('name')} required placeholder="e.g. PlayStation 5" autoFocus />
+              </div>
+              <div>
+                <label className="label">Abbreviation</label>
+                <input className="input" value={form.abbreviation} onChange={f('abbreviation')} placeholder="e.g. PS5" maxLength={10} />
+              </div>
+              <div>
+                <label className="label">Release Year</label>
+                <input className="input" type="number" value={form.releaseYear} onChange={f('releaseYear')} placeholder="e.g. 2020" min="1970" max="2100" />
+              </div>
+              <div className="col-span-2">
+                <label className="label">Manufacturer</label>
+                <input className="input" value={form.manufacturer} onChange={f('manufacturer')} placeholder="e.g. Sony, Microsoft, Nintendo" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : modal === 'add' ? 'Create Platform' : 'Update Platform'}</button>
+              <button type="button" className="btn-secondary" onClick={() => setModal(null)}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {loading ? <Skeleton rows={4} /> : platforms.length === 0 ? (
+        <div className="card p-8 text-center text-zinc-500">No platforms yet. Add one to get started.</div>
+      ) : (
+        <div className="space-y-3">
+          {platforms.map(platform => (
+            <div key={platform._id} className="card p-4 flex items-center gap-4 animate-slide-up">
+              <div className="w-14 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-mono font-bold text-zinc-600 dark:text-zinc-300">
+                  {platform.abbreviation || platform.name.slice(0, 4)}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">{platform.name}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {[platform.manufacturer, platform.releaseYear].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => openEdit(platform)} className="btn-secondary text-sm py-1.5 px-3">Edit</button>
+                <button onClick={() => handleDelete(platform._id)} className="btn-danger text-sm py-1.5 px-3">Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN ADMIN PAGE ──────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'games', label: 'Games', icon: '🎮' },
-  { id: 'reviews', label: 'Reviews', icon: '⭐' },
-  { id: 'users', label: 'Users', icon: '👤' },
+  { id: 'games',     label: 'Games',     icon: '🎮' },
+  { id: 'reviews',   label: 'Reviews',   icon: '⭐' },
+  { id: 'users',     label: 'Users',     icon: '👤' },
+  { id: 'genres',    label: 'Genres',    icon: '🏷️' },
+  { id: 'platforms', label: 'Platforms', icon: '🕹️' },
 ];
 
 export default function AdminPage() {
@@ -501,11 +751,11 @@ export default function AdminPage() {
           <h1 className="text-6xl font-display text-zinc-900 dark:text-zinc-100">ADMIN</h1>
           <span className="badge-admin text-sm px-3 py-1">PANEL</span>
         </div>
-        <p className="text-zinc-500 dark:text-zinc-400">Manage games, reviews, and users</p>
+        <p className="text-zinc-500 dark:text-zinc-400">Manage games, reviews, users, genres, and platforms</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-8 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-8 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl w-fit flex-wrap">
         {TABS.map(t => (
           <button
             key={t.id}
@@ -523,11 +773,12 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Tab content */}
       <div className="animate-fade-in" key={tab}>
-        {tab === 'games' && <GamesTab />}
-        {tab === 'reviews' && <ReviewsTab />}
-        {tab === 'users' && <UsersTab />}
+        {tab === 'games'     && <GamesTab />}
+        {tab === 'reviews'   && <ReviewsTab />}
+        {tab === 'users'     && <UsersTab />}
+        {tab === 'genres'    && <GenresTab />}
+        {tab === 'platforms' && <PlatformsTab />}
       </div>
     </div>
   );

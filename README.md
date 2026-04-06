@@ -1,4 +1,4 @@
-# 🎮 GameVault — Video Game Review Platform
+# METAGAME — Video Game Review Platform
 
 A full-stack MERN application for discovering and reviewing video games.
 

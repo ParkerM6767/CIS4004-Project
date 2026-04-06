@@ -23,9 +23,16 @@ const gameSchema = new mongoose.Schema(
       default: '',
     },
     genre: {
-      type: String,
-      default: 'Unknown',
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Genre',
+      default: null,
     },
+    platforms: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Platform',
+      },
+    ],
     releaseYear: {
       type: Number,
     },

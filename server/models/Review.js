@@ -12,6 +12,11 @@ const reviewSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Author is required'],
     },
+    platform: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Platform',
+      default: null,
+    },
     rating: {
       type: Number,
       required: [true, 'Rating is required'],
@@ -56,7 +61,5 @@ reviewSchema.post('save', async function () {
 reviewSchema.post('findOneAndDelete', async function (doc) {
   if (doc) await updateGameRating(doc.game);
 });
-
-reviewSchema.post('deleteMany', async function () {});
 
 module.exports = mongoose.model('Review', reviewSchema);

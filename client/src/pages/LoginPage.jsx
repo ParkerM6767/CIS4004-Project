@@ -29,7 +29,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-display text-zinc-900 dark:text-zinc-100 mb-2">WELCOME BACK</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">Sign in to GameVault</p>
+          <p className="text-zinc-500 dark:text-zinc-400">Sign in to METAGAME</p>
         </div>
 
         <div className="card p-8">

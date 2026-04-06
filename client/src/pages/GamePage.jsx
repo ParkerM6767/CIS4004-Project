@@ -19,6 +19,11 @@ function ReviewCard({ review, currentUser, onDelete, onEdit }) {
           {review.author?.role === 'admin' && <span className="badge-admin">ADMIN</span>}
           <StarRating rating={review.rating} size="sm" />
           <span className="text-xs text-amber-500 font-mono font-medium">{review.rating}/5</span>
+          {review.platform && (
+            <span className="text-xs font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-1.5 py-0.5 rounded">
+              {review.platform.abbreviation || review.platform.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-zinc-400 dark:text-zinc-500">
@@ -37,9 +42,10 @@ function ReviewCard({ review, currentUser, onDelete, onEdit }) {
   );
 }
 
-function ReviewForm({ gameId, existing, onSubmit, onCancel }) {
+function ReviewForm({ gameId, gamePlatforms, existing, onSubmit, onCancel }) {
   const [rating, setRating] = useState(existing?.rating || 0);
   const [description, setDescription] = useState(existing?.description || '');
+  const [platformId, setPlatformId] = useState(existing?.platform?._id || '');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
@@ -49,11 +55,13 @@ function ReviewForm({ gameId, existing, onSubmit, onCancel }) {
     if (description.trim().length < 10) return toast({ message: 'Review must be at least 10 characters', type: 'error' });
     setLoading(true);
     try {
+      const payload = { gameId, rating, description };
+      if (platformId) payload.platformId = platformId;
       if (existing) {
-        const res = await api.put(`/reviews/${existing._id}`, { rating, description });
+        const res = await api.put(`/reviews/${existing._id}`, { rating, description, platform: platformId || null });
         onSubmit(res.data.review, true);
       } else {
-        const res = await api.post('/reviews', { gameId, rating, description });
+        const res = await api.post('/reviews', { gameId, rating, description, platform: platformId || null });
         onSubmit(res.data.review, false);
       }
     } catch (err) {
@@ -68,9 +76,22 @@ function ReviewForm({ gameId, existing, onSubmit, onCancel }) {
       <h3 className="font-display text-lg text-zinc-900 dark:text-zinc-100">
         {existing ? 'EDIT REVIEW' : 'WRITE A REVIEW'}
       </h3>
-      <div>
-        <label className="label">Your Rating</label>
-        <StarRating rating={rating} size="lg" interactive onChange={setRating} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="label">Your Rating</label>
+          <StarRating rating={rating} size="lg" interactive onChange={setRating} />
+        </div>
+        {gamePlatforms?.length > 0 && (
+          <div>
+            <label className="label">Platform <span className="text-zinc-400 font-normal">(optional)</span></label>
+            <select className="input" value={platformId} onChange={e => setPlatformId(e.target.value)}>
+              <option value="">Select platform...</option>
+              {gamePlatforms.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div>
         <label className="label">Review</label>
@@ -117,7 +138,7 @@ export default function GamePage() {
         setGame(gameRes.data.game);
         setReviews(reviewRes.data.reviews);
         setTotalPages(reviewRes.data.pages);
-      } catch (err) {
+      } catch {
         toast({ message: 'Failed to load game', type: 'error' });
       } finally {
         setLoading(false);
@@ -135,7 +156,6 @@ export default function GamePage() {
       setReviews(prev => [review, ...prev]);
       toast({ message: 'Review posted!', type: 'success' });
     }
-    // Refresh game to update rating
     api.get(`/games/${id}`).then(res => setGame(res.data.game));
   };
 
@@ -146,7 +166,7 @@ export default function GamePage() {
       setReviews(prev => prev.filter(r => r._id !== reviewId));
       api.get(`/games/${id}`).then(res => setGame(res.data.game));
       toast({ message: 'Review deleted', type: 'success' });
-    } catch (err) {
+    } catch {
       toast({ message: 'Failed to delete review', type: 'error' });
     }
   };
@@ -195,7 +215,29 @@ export default function GamePage() {
             {game.title}
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mb-1">{game.author}</p>
-          {game.genre && <p className="text-xs font-mono text-zinc-400 dark:text-zinc-500 mb-4">{game.genre}{game.releaseYear ? ` · ${game.releaseYear}` : ''}</p>}
+
+          {/* Genre + Year */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {game.genre?.name && (
+              <span className="text-xs font-mono bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full">
+                {game.genre.name}
+              </span>
+            )}
+            {game.releaseYear && (
+              <span className="text-xs font-mono text-zinc-400 dark:text-zinc-500">{game.releaseYear}</span>
+            )}
+          </div>
+
+          {/* Platforms */}
+          {game.platforms?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {game.platforms.map(p => (
+                <span key={p._id} className="text-xs font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2 py-0.5 rounded">
+                  {p.name}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-3 mb-5">
             <StarRating rating={game.currentRating} size="lg" />
@@ -219,15 +261,15 @@ export default function GamePage() {
             <Link to="/login" className="text-brand-600 dark:text-brand-400 hover:underline font-medium">Sign in</Link> to write a review
           </div>
         ) : !hasReviewed && !editingReview ? (
-          <ReviewForm gameId={id} onSubmit={handleReviewSubmit} />
+          <ReviewForm gameId={id} gamePlatforms={game.platforms} onSubmit={handleReviewSubmit} />
         ) : null}
       </div>
 
-      {/* Edit modal */}
       {editingReview && (
         <div className="mb-8">
           <ReviewForm
             gameId={id}
+            gamePlatforms={game.platforms}
             existing={editingReview}
             onSubmit={handleReviewSubmit}
             onCancel={() => setEditingReview(null)}
@@ -244,18 +286,12 @@ export default function GamePage() {
         ) : (
           reviews.map((review, i) => (
             <div key={review._id} style={{ animationDelay: `${i * 40}ms` }}>
-              <ReviewCard
-                review={review}
-                currentUser={user}
-                onDelete={handleDelete}
-                onEdit={setEditingReview}
-              />
+              <ReviewCard review={review} currentUser={user} onDelete={handleDelete} onEdit={setEditingReview} />
             </div>
           ))
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-8">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary disabled:opacity-40">← Prev</button>

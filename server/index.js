@@ -7,6 +7,8 @@ const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const reviewRoutes = require('./routes/reviews');
 const userRoutes = require('./routes/users');
+const genreRoutes = require('./routes/genres');
+const platformRoutes = require('./routes/platforms');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/genres', genreRoutes);
+app.use('/api/platforms', platformRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date() }));
@@ -36,7 +40,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start server
 const PORT = process.env.PORT || 5000;
 
 mongoose

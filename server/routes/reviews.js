@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const { gameId, page = 1, limit = 20 } = req.query;
     const query = gameId ? { game: gameId } : {};
     const reviews = await Review.find(query)
-      .populate('author', 'username role')
+      .populate('author', 'username role').populate('platform', 'name abbreviation')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -25,7 +25,7 @@ router.get('/all', protect, requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const reviews = await Review.find()
-      .populate('author', 'username')
+      .populate('author', 'username').populate('platform', 'name abbreviation').populate('game', 'title')
       .populate('game', 'title')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -47,7 +47,7 @@ router.post('/', protect, async (req, res) => {
       rating,
       description,
     });
-    await review.populate('author', 'username role');
+    await review.populate('author', 'username role').populate('platform', 'name abbreviation');
     res.status(201).json({ review });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ message: 'You already reviewed this game' });
@@ -72,7 +72,7 @@ router.put('/:id', protect, async (req, res) => {
     review.rating = req.body.rating ?? review.rating;
     review.description = req.body.description ?? review.description;
     await review.save();
-    await review.populate('author', 'username role');
+    await review.populate('author', 'username role').populate('platform', 'name abbreviation');
     res.json({ review });
   } catch (err) {
     res.status(500).json({ message: err.message });
