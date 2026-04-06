@@ -7,7 +7,7 @@ A full-stack MERN application for discovering and reviewing video games.
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 18, Vite, React Router v6 |
-| Styling | Tailwind CSS v3 (dark mode) |
+| Styling | Tailwind CSS |
 | Backend | Node.js, Express |
 | Database | MongoDB, Mongoose |
 | Auth | JWT (JSON Web Tokens), bcryptjs |
@@ -17,14 +17,13 @@ A full-stack MERN application for discovering and reviewing video games.
 - **Browse** a grid of games with cover art and star ratings
 - **Review** any game with a 1–5 star rating and written review
 - **Authentication** — login, signup, JWT session, role-based access
-- **Dark Mode** toggle (persists across sessions)
 - **Admin Panel** — full CRUD for games, reviews, and users
 - **Search** games by title, description, or developer
 - **Pagination** on all lists
 
 ---
 
-## Quick Start
+## Quick Start Guide
 
 ### Prerequisites
 
@@ -51,8 +50,7 @@ cp .env.example .env
 ```bash
 cd server
 npm run seed
-# Creates: admin/admin123, gamer_pro/password123, retro_fan/password123
-# + 6 games and sample reviews
+# Creates starting users, and populates games and their respective reviewers
 ```
 
 ### 4. Run Development Servers
