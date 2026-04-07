@@ -4,7 +4,7 @@ import { useToast } from '../components/Toast';
 import Modal from '../components/Modal';
 import StarRating from '../components/StarRating';
 
-// ─── SHARED HELPERS ───────────────────────────────────────────────────────────
+// Sub Methods
 
 function Skeleton({ rows = 5 }) {
   return (
@@ -32,8 +32,6 @@ function Pagination({ page, pages, onChange }) {
     </div>
   );
 }
-
-// ─── GAMES TAB ────────────────────────────────────────────────────────────────
 
 function GameForm({ initial, onSubmit, onCancel }) {
   const [genres, setGenres] = useState([]);
@@ -244,8 +242,6 @@ function GamesTab() {
   );
 }
 
-// ─── REVIEWS TAB ─────────────────────────────────────────────────────────────
-
 function ReviewsTab() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -361,8 +357,6 @@ function ReviewsTab() {
     </div>
   );
 }
-
-// ─── USERS TAB ────────────────────────────────────────────────────────────────
 
 function UsersTab() {
   const [users, setUsers] = useState([]);
@@ -483,8 +477,6 @@ function UsersTab() {
   );
 }
 
-// ─── GENRES TAB ───────────────────────────────────────────────────────────────
-
 function GenresTab() {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -599,7 +591,7 @@ function GenresTab() {
   );
 }
 
-// ─── PLATFORMS TAB ────────────────────────────────────────────────────────────
+// Platforms Tab
 
 function PlatformsTab() {
   const [platforms, setPlatforms] = useState([]);
@@ -731,7 +723,7 @@ function PlatformsTab() {
   );
 }
 
-// ─── MAIN ADMIN PAGE ──────────────────────────────────────────────────────────
+// Main page
 
 const TABS = [
   { id: 'games',     label: 'Games',     icon: '🎮' },

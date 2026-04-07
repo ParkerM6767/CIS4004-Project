@@ -47,7 +47,8 @@ router.post('/', protect, async (req, res) => {
       rating,
       description,
     });
-    await review.populate('author', 'username role').populate('platform', 'name abbreviation');
+    await review.populate('author', 'username role');
+    await review.populate('platform', 'name abbreviation');
     res.status(201).json({ review });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ message: 'You already reviewed this game' });
@@ -72,7 +73,8 @@ router.put('/:id', protect, async (req, res) => {
     review.rating = req.body.rating ?? review.rating;
     review.description = req.body.description ?? review.description;
     await review.save();
-    await review.populate('author', 'username role').populate('platform', 'name abbreviation');
+    await review.populate('author', 'username role');
+    await review.populate('platform', 'name abbreviation');
     res.json({ review });
   } catch (err) {
     res.status(500).json({ message: err.message });
