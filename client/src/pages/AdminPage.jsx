@@ -38,7 +38,7 @@ function GameForm({ initial, onSubmit, onCancel }) {
   const [platforms, setPlatforms] = useState([]);
   const [form, setForm] = useState({
     title: '', description: '', author: '', coverImage: '',
-    genre: '', releaseYear: '', platforms: [],
+    //genre: '', releaseYear: '', platforms: [],
     ...initial,
     genre: initial?.genre?._id || initial?.genre || '',
     platforms: (initial?.platforms || []).map(p => p._id || p),
