@@ -72,7 +72,7 @@ export default function HomePage() {
           META<span className="text-brand-600 dark:text-brand-500">GAME</span>
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400 text-lg">
-          Discover and review your favorite video games
+          Discover a new game or leave a review of your favorite video game! Browse by genre, platform, or search for specific titles and developers.
         </p>
       </div>
 
@@ -125,7 +125,7 @@ export default function HomePage() {
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">
           {hasFilters
             ? `${total} result${total !== 1 ? 's' : ''} found`
-            : `${total} game${total !== 1 ? 's' : ''} in the vault`}
+            : `${total} game${total !== 1 ? 's' : ''} reviewed`}
         </p>
       )}
 

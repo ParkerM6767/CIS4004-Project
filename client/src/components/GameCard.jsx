@@ -29,7 +29,7 @@ export default function GameCard({ game }) {
       </div>
 
       <div className="p-3">
-        <h3 className="font-display text-lg leading-tight text-zinc-900 dark:text-zinc-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2">
+        <h3 className="font-display text-lg leading-tight text-zinc-900 dark:text-zinc-100 group-hover:text-brand-600 dark:group-hover:text-brand-500 transition-colors line-clamp-2">
           {game.title}
         </h3>
         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{game.author}</p>
