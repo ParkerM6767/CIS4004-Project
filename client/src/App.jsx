@@ -20,7 +20,14 @@ export default function App() {
               <Navbar />
               <main>
                 <Routes>
-                  <Route path="/" element={<HomePage />} />
+                  <Route 
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <HomePage />
+                      </ProtectedRoute>
+                  }
+                  />
                   <Route path="/games/:id" element={<GamePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />

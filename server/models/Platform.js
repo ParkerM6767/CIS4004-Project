@@ -1,5 +1,19 @@
 const mongoose = require('mongoose');
 
+/*
+
+This code was generated in parts using AI
+
+Model: Claude Sonnet 4.6
+Date of Use: 04/05/2026
+Prompt Description: Generate a entity via mymongoose schema  for my data model called Platform. 
+Include timestamps and validation rules for each field.
+
+Results: I was able to use the generated code to meet the requirements for the 5 entitites required for my data model. 
+Where I was able to implement new fields in games and reviews collections to establish entity relationships with them.
+
+*/
+
 const platformSchema = new mongoose.Schema(
   {
     name: {
