@@ -477,6 +477,19 @@ function UsersTab() {
   );
 }
 
+
+/*
+
+This code was generated in parts using AI
+
+Model: Claude Sonnet 4.6
+Date of Use: 04/05/2026
+Prompt Description: Using the existing code structure, generate a tab to manage Genres using CRUD API routes, and other to manage Platforms.
+
+Results: Methods similar to the code above that was able to implement all the CRUD features for both entities using modals for editing and creating new objects.
+
+*/
+
 function GenresTab() {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
