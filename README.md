@@ -37,7 +37,7 @@ A full-stack MERN application for discovering and reviewing video games.
 npm run install-all
 ```
 
-### 2. Configure Environment
+### 2. Configure Environment Variables
 
 ```bash
 cd server
